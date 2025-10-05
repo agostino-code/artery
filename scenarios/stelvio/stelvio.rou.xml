@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Stelvio Pass V2X Accident Simulation (simplified)
+         Exactly 11 vehicles as requested:
+             - 5 from the top side (precedono l'incidente)
+             - 5 from the bottom side (dopo l'incidente)
+             - 1 accident vehicle involved in the crash
+         Colors: blue = regular/witness, orange = accident vehicle
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+        <!-- Vehicle Types -->
+        <vType id="veh_passenger" vClass="passenger" accel="2.0" decel="4.5" sigma="0.5" length="4.5" maxSpeed="22.22" color="blue"/>
+        <vType id="veh_accident" vClass="passenger" accel="2.0" decel="4.5" sigma="0.5" length="4.5" maxSpeed="22.22" color="orange"/>
+        <vType id="veh_witness" vClass="passenger" accel="2.2" decel="4.8" sigma="0.4" length="4.6" maxSpeed="23.0" color="blue"/>
+
+    <!-- Schedule: vehicles depart at 0s and then every 5s; accident at 25s, witness at 30s -->
+    <!-- Sorted by depart time to satisfy SUMO -->
+    <trip id="veh_0" type="veh_passenger"  depart="0.00"  departLane="best" departSpeed="max" from="173619167" to="173619170#0"/>
+    <trip id="veh_opp_0" type="veh_passenger" depart="0.00" departLane="best" departSpeed="max" from="-173619170#9" to="-1295824235"/>
+    <trip id="veh_1" type="veh_passenger"  depart="5.00"  departLane="best" departSpeed="max" from="173619167" to="173619170#0"/>
+    <trip id="veh_opp_1" type="veh_passenger" depart="5.00" departLane="best" departSpeed="max" from="-173619170#9" to="-1295824235"/>
+    <trip id="veh_2" type="veh_passenger"  depart="10.00" departLane="best" departSpeed="max" from="173619167" to="173619170#0"/>
+    <trip id="veh_opp_2" type="veh_passenger" depart="10.00" departLane="best" departSpeed="max" from="-173619170#9" to="-1295824235"/>
+    <trip id="veh_3" type="veh_passenger"  depart="15.00" departLane="best" departSpeed="max" from="173619167" to="173619170#0"/>
+    <trip id="veh_opp_3" type="veh_passenger" depart="15.00" departLane="best" departSpeed="max" from="-173619170#9" to="-1295824235"/>
+    <trip id="veh_4" type="veh_passenger"  depart="20.00" departLane="best" departSpeed="max" from="173619167" to="173619170#0"/>
+    <trip id="veh_opp_4" type="veh_passenger" depart="20.00" departLane="best" departSpeed="max" from="-173619170#9" to="-1295824235"/>
+    <trip id="accident_veh_0" type="veh_accident" depart="25.00" departLane="best" departSpeed="max" from="173619167" to="173619170#0"/>
+    <trip id="witness_veh_0" type="veh_witness" depart="30.00" departLane="best" departSpeed="max" from="173619167" to="173619170#0"/>
+    <trip id="veh_5" type="veh_passenger"  depart="35.00" departLane="best" departSpeed="max" from="173619167" to="173619170#0"/>
+    <trip id="veh_opp_5" type="veh_passenger" depart="35.00" departLane="best" departSpeed="max" from="-173619170#9" to="-1295824235"/>
+    <trip id="veh_6" type="veh_passenger"  depart="40.00" departLane="best" departSpeed="max" from="173619167" to="173619170#0"/>
+    <trip id="veh_opp_6" type="veh_passenger" depart="40.00" departLane="best" departSpeed="max" from="-173619170#9" to="-1295824235"/>
+    <trip id="veh_7" type="veh_passenger"  depart="45.00" departLane="best" departSpeed="max" from="173619167" to="173619170#0"/>
+    <trip id="veh_opp_7" type="veh_passenger" depart="45.00" departLane="best" departSpeed="max" from="-173619170#9" to="-1295824235"/>
+    <trip id="veh_8" type="veh_passenger"  depart="50.00" departLane="best" departSpeed="max" from="173619167" to="173619170#0"/>
+    <trip id="veh_opp_8" type="veh_passenger" depart="50.00" departLane="best" departSpeed="max" from="-173619170#9" to="-1295824235"/>
+</routes>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- services_infrastructure.xml - Infrastructure services (antenna/satellite) -->
+<services>
+    <!-- Infrastructure relay service -->
+    <service type="src.InfrastructureService">
+        <listener port="2001" />
+    </service>
+</services>

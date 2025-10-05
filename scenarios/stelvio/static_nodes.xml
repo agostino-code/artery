@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Static infrastructure nodes for Stelvio scenario -->
+<!-- Position is center of Stelvio map (approximate) -->
+<RSUs>
+    <!-- Terrestrial Antenna (6G TN Base Station) -->
+    <!-- Positioned at strategic location with 1000m coverage -->
+    <rsu id="antenna" positionX="729.0" positionY="390.0" />
+    
+    <!-- Satellite (LEO NTN) -->
+    <!-- Same position but different coverage/latency parameters -->
+    <rsu id="satellite" positionX="729.0" positionY="390.0" />
+</RSUs>
+
+

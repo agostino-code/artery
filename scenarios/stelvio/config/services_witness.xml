@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- services_witness.xml - Vehicle services for WITNESS scenario -->
+<services>
+    <!-- Witness vehicle sends delayed DENM (activated by storyboard signal) -->
+    <service type="src.WitnessVehicleService">
+        <listener port="2001" />
+    </service>
+    
+    <!-- All vehicles receive DENM messages -->
+    <service type="src.VehicleReceiverService">
+        <listener port="2002" />
+    </service>
+</services>
