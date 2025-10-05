@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Stelvio Simulation GUI - Simplified
+Stelvio Simulation GUI
 ====================================
 
-Simple GUI for running Stelvio simulations using make commands.
+GUI for running Stelvio simulations ìcommands.
 
 Requirements:
     pip install PyQt5
@@ -81,7 +81,7 @@ class MakeWorker(QThread):
 # =============================================================================
 
 class StelvioGUI(QMainWindow):
-    """Simplified Stelvio simulation GUI"""
+    """Stelvio simulation GUI"""
     
     def __init__(self):
         super().__init__()
@@ -143,7 +143,7 @@ class StelvioGUI(QMainWindow):
         analysis_group = QGroupBox("3. Analysis & Export")
         analysis_layout = QVBoxLayout()
 
-        analysis_info = QLabel("Generate plots and export real data to CSV")
+        analysis_info = QLabel("Generate plots and export data to CSV")
         analysis_info.setStyleSheet("color: #666; font-size: 10px; padding: 5px;")
         analysis_layout.addWidget(analysis_info)
         
@@ -345,8 +345,6 @@ class StelvioGUI(QMainWindow):
 <li><code>make export-csv</code> - Export to CSV</li>
 <li><code>make clean</code> - Clean all results</li>
 </ul>
-
-<p><b>Note:</b> CSV exports contain real simulation data.</p>
 """
         QMessageBox.about(self, "Help", help_text)
 
