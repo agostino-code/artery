@@ -18,7 +18,7 @@ def createStories(board):
              - SignalEffect: Emits "crash_incident" to middleware
              - CrashedVehicleService triggers DENM transmission
     
-    Note: Using time-based condition (first vehicle after t=50s)
+    Note: Using time-based condition (first vehicle after t=2000s)
           instead of specific vehicle name for better portability.
     """
     # Crash occurs at t=200 seconds
@@ -47,5 +47,6 @@ def createStories(board):
     print(f"  Signal: 'crash_incident'")
     print(f"  Effects: Emergency Stop + Signal Emission")
     print("=" * 80)
+
 
 
