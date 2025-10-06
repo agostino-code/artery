@@ -13,7 +13,7 @@ def createStories(board):
     
     Timeline:
     ---------
-    t=50.0s: First vehicle to pass triggers crash
+    t=200.0s: First vehicle to pass triggers crash
              - StopEffect: Vehicle stops immediately
              - SignalEffect: Emits "crash_incident" to middleware
              - CrashedVehicleService triggers DENM transmission
@@ -47,6 +47,7 @@ def createStories(board):
     print(f"  Signal: 'crash_incident'")
     print(f"  Effects: Emergency Stop + Signal Emission")
     print("=" * 80)
+
 
 
 
