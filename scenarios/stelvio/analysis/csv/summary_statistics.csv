@@ -1,0 +1,7 @@
+Configuration,Scenario_Type,Infrastructure,Repetitions,PDR_%,Mean_Reception_Delay_ms,Median_Reception_Delay_ms,P95_Reception_Delay_ms,Std_Reception_Delay_ms,Mean_Cloud_Latency_ms,Median_Cloud_Latency_ms,Coverage_%,Total_Vehicles
+Crashed_Terrestrial,Crashed,Terrestrial,1,55.0,44.045,44.708,103.941,44.242,53.029,53.029,70.0,20
+Crashed_Satellite,Crashed,Satellite,1,85.0,348.194,395.508,483.949,164.582,291.184,291.184,95.0,20
+Crashed_Hybrid,Crashed,Hybrid,1,100.0,121.326,114.173,281.52,98.843,54.876,54.876,100.0,20
+Witness_Terrestrial,Witness,Terrestrial,1,60.0,1845.395,3035.292,3123.356,1546.262,3042.069,3042.069,65.0,20
+Witness_Satellite,Witness,Satellite,1,90.0,3045.668,3385.827,3465.005,1043.831,3384.006,3384.006,95.0,20
+Witness_Hybrid,Witness,Hybrid,1,100.0,3168.939,3181.102,3362.733,132.178,3199.064,3199.064,100.0,20
