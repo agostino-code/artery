@@ -176,8 +176,7 @@ make check          # Verifica (34 controlli)
 make build          # Compila scenario
 
 # 2. Esegui Simulazioni
-make run-crashed    # Esegui tutti scenari crashed (3 configs)
-make run-witness    # Esegui tutti scenari witness (3 configs)
+make run-all        # Esegui tutte le 6 configurazioni
 # oppure
 ./quickstart.sh run-all  # Tutte le 6 configurazioni
 
@@ -198,8 +197,6 @@ make clean-all      # Rimuovi tutto (incluso venv)
 | `make help` | Mostra tutti i comandi disponibili |
 | `make check` | Verifica setup e dipendenze (34 test) |
 | `make build` | Compila libreria scenario (libartery_stelvio.so) |
-| `make run-crashed` | Esegui 3 scenari crashed (Terrestrial/Satellite/Hybrid) |
-| `make run-witness` | Esegui 3 scenari witness (Terrestrial/Satellite/Hybrid) |
 | `make run-all` | Esegui tutte le 6 configurazioni |
 | `make analyze` | Genera grafici e statistiche CSV |
 | `make gui` | Avvia GUI Python per controllo batch |
@@ -436,8 +433,8 @@ Attiva **entrambe** le infrastrutture:
 # Imposta ritardo personalizzato
 export STELVIO_WITNESS_DELAY=5.0
 
-# Esegui scenario witness
-make run-witness
+# Esegui scenario witness direttamente con opp_run
+opp_run -u Cmdenv -c Witness_Hybrid omnetpp.ini
 
 # Studio sensibilità
 for delay in 1.0 3.0 5.0 10.0; do
@@ -1694,7 +1691,7 @@ class vanetza::btp::DataRequest;  // No #include
 
 ```bash
 # Witness delay (secondi)
-export STELVIO_WITNESS_DELAY=5.0
+export STELVIO_WITNESS_DELAY=3.0
 
 # OMNeT++ debug
 export OMNETPP_IMAGE_PATH=/workspaces/artery/scenarios/stelvio/images
@@ -1808,7 +1805,7 @@ Richiede: disclosure source code, same license. No warranty.
 ```bibtex
 @misc{stelvio_v2x_6g_2025,
   title={Stelvio V2X Simulation: 6G Hybrid Terrestrial-Satellite Infrastructure Study},
-  author={Your Name},
+  author={Agostino Cesarano},
   year={2025},
   month={October},
   note={OMNeT++ simulation scenario for hybrid V2X communication on Stelvio Pass (SS38)},
@@ -1834,7 +1831,7 @@ Richiede: disclosure source code, same license. No warranty.
 ```bash
 make check          # Verifica completa setup
 make build          # Compila scenario
-make run-crashed    # Test esecuzione
+make run-all        # Test esecuzione di tutte le config
 make analyze        # Analizza risultati
 ```
 

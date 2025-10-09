@@ -64,7 +64,12 @@ ALL_CONFIGS = {**CONFIGURATIONS["Crashed"], **CONFIGURATIONS["Witness"]}
 # Plotting style
 sns.set_style("whitegrid")
 plt.rcParams['figure.figsize'] = (12, 8)
-plt.rcParams['font.size'] = 11
+plt.rcParams['font.size'] = 14
+plt.rcParams['axes.labelsize'] = 16
+plt.rcParams['axes.titlesize'] = 18
+plt.rcParams['xtick.labelsize'] = 14
+plt.rcParams['ytick.labelsize'] = 14
+plt.rcParams['legend.fontsize'] = 13
 
 
 # =============================================================================
@@ -351,13 +356,14 @@ class PlotGenerator:
             patch.set_facecolor(color)
             patch.set_alpha(0.7)
         
-        ax.set_ylabel('Reception Delay (ms)', fontsize=14, fontweight='bold')
-        ax.set_xlabel('Infrastructure Type', fontsize=14, fontweight='bold')
+        ax.set_ylabel('Reception Delay (ms)', fontsize=16, fontweight='bold')
+        ax.set_xlabel('Infrastructure Type', fontsize=16, fontweight='bold')
         title = f'{scenario_type} Scenario - DENM Reception Delay' if scenario_type else 'DENM Reception Delay Distribution'
-        ax.set_title(title, fontsize=16, fontweight='bold')
+        ax.set_title(title, fontsize=18, fontweight='bold')
         ax.grid(True, alpha=0.3)
         
-        plt.xticks(rotation=0, ha='center')
+        plt.xticks(rotation=0, ha='center', fontsize=14)
+        plt.yticks(fontsize=14)
         plt.tight_layout()
         
         filename = f"latency_boxplot_{scenario_type.lower()}.png" if scenario_type else "latency_boxplot.png"
@@ -388,11 +394,11 @@ class PlotGenerator:
                    color=ALL_CONFIGS[config]['color'],
                    linewidth=2.5)
         
-        ax.set_xlabel('Reception Delay (ms)', fontsize=14, fontweight='bold')
-        ax.set_ylabel('Cumulative Probability', fontsize=14, fontweight='bold')
+        ax.set_xlabel('Reception Delay (ms)', fontsize=16, fontweight='bold')
+        ax.set_ylabel('Cumulative Probability', fontsize=16, fontweight='bold')
         title = f'{scenario_type} Scenario - Cumulative Distribution' if scenario_type else 'Cumulative Distribution'
-        ax.set_title(title, fontsize=16, fontweight='bold')
-        ax.legend(fontsize=12, title='Infrastructure', title_fontsize=13)
+        ax.set_title(title, fontsize=18, fontweight='bold')
+        ax.legend(fontsize=14, title='Infrastructure', title_fontsize=15)
         ax.grid(True, alpha=0.3)
         
         plt.tight_layout()
@@ -437,12 +443,12 @@ class PlotGenerator:
         bars = ax.bar(x, means, yerr=errors, capsize=5, 
                       color=colors, alpha=0.7, edgecolor='black', linewidth=1.5)
         
-        ax.set_ylabel('Cloud Delivery Latency (ms)', fontsize=14, fontweight='bold')
-        ax.set_xlabel('Infrastructure Type', fontsize=14, fontweight='bold')
+        ax.set_ylabel('Cloud Delivery Latency (ms)', fontsize=16, fontweight='bold')
+        ax.set_xlabel('Infrastructure Type', fontsize=16, fontweight='bold')
         title = f'{scenario_type} Scenario - Cloud Delivery Latency' if scenario_type else 'Cloud Delivery Latency'
-        ax.set_title(title, fontsize=16, fontweight='bold')
+        ax.set_title(title, fontsize=18, fontweight='bold')
         ax.set_xticks(x)
-        ax.set_xticklabels(labels, rotation=0, ha='center', fontsize=12)
+        ax.set_xticklabels(labels, rotation=0, ha='center', fontsize=14)
         ax.grid(True, alpha=0.3, axis='y')
         
         # Add value labels on bars
@@ -450,7 +456,7 @@ class PlotGenerator:
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2., height,
                    f'{mean:.1f}ms',
-                   ha='center', va='bottom', fontsize=10)
+                   ha='center', va='bottom', fontsize=12, fontweight='bold')
         
         plt.tight_layout()
         
@@ -487,12 +493,12 @@ class PlotGenerator:
         x = np.arange(len(labels))
         bars = ax.bar(x, pdrs, color=colors, alpha=0.7, edgecolor='black', linewidth=1.5)
         
-        ax.set_ylabel('Packet Delivery Ratio (%)', fontsize=14, fontweight='bold')
-        ax.set_xlabel('Infrastructure Type', fontsize=14, fontweight='bold')
+        ax.set_ylabel('Packet Delivery Ratio (%)', fontsize=16, fontweight='bold')
+        ax.set_xlabel('Infrastructure Type', fontsize=16, fontweight='bold')
         title = f'{scenario_type} Scenario - Packet Delivery Ratio' if scenario_type else 'Packet Delivery Ratio'
-        ax.set_title(title, fontsize=16, fontweight='bold')
+        ax.set_title(title, fontsize=18, fontweight='bold')
         ax.set_xticks(x)
-        ax.set_xticklabels(labels, rotation=0, ha='center', fontsize=12)
+        ax.set_xticklabels(labels, rotation=0, ha='center', fontsize=14)
         ax.set_ylim([0, 105])
         ax.grid(True, alpha=0.3, axis='y')
         
@@ -501,7 +507,7 @@ class PlotGenerator:
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2., height,
                    f'{pdr:.1f}%',
-                   ha='center', va='bottom', fontsize=10, fontweight='bold')
+                   ha='center', va='bottom', fontsize=12, fontweight='bold')
         
         plt.tight_layout()
         
@@ -538,12 +544,12 @@ class PlotGenerator:
         x = np.arange(len(labels))
         bars = ax.bar(x, coverages, color=colors, alpha=0.7, edgecolor='black', linewidth=1.5)
         
-        ax.set_ylabel('Infrastructure Coverage (%)', fontsize=14, fontweight='bold')
-        ax.set_xlabel('Infrastructure Type', fontsize=14, fontweight='bold')
+        ax.set_ylabel('Infrastructure Coverage (%)', fontsize=16, fontweight='bold')
+        ax.set_xlabel('Infrastructure Type', fontsize=16, fontweight='bold')
         title = f'{scenario_type} Scenario - Infrastructure Coverage' if scenario_type else 'Infrastructure Coverage'
-        ax.set_title(title, fontsize=16, fontweight='bold')
+        ax.set_title(title, fontsize=18, fontweight='bold')
         ax.set_xticks(x)
-        ax.set_xticklabels(labels, rotation=0, ha='center', fontsize=12)
+        ax.set_xticklabels(labels, rotation=0, ha='center', fontsize=14)
         ax.set_ylim([0, 105])
         ax.grid(True, alpha=0.3, axis='y')
         
@@ -552,7 +558,7 @@ class PlotGenerator:
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2., height,
                    f'{cov:.1f}%',
-                   ha='center', va='bottom', fontsize=10, fontweight='bold')
+                   ha='center', va='bottom', fontsize=12, fontweight='bold')
         
         plt.tight_layout()
         
@@ -590,11 +596,12 @@ class PlotGenerator:
             ax.hist(delays, bins=50, alpha=0.6, label=infra, 
                    color=infra_colors[infra], edgecolor='black')
         
-        ax.set_xlabel('Reception Delay (ms)', fontsize=12)
-        ax.set_ylabel('Frequency', fontsize=12)
-        ax.set_title('Reception Delay Distribution', fontsize=14, fontweight='bold')
-        ax.legend()
+        ax.set_xlabel('Reception Delay (ms)', fontsize=14)
+        ax.set_ylabel('Frequency', fontsize=14)
+        ax.set_title('Reception Delay Distribution', fontsize=16, fontweight='bold')
+        ax.legend(fontsize=12)
         ax.grid(True, alpha=0.3)
+        ax.tick_params(axis='both', labelsize=12)
         
         # 2. Reception Delay CDF
         ax = axes[0, 1]
@@ -612,11 +619,12 @@ class PlotGenerator:
             ax.plot(sorted_delays, cdf, label=infra, 
                    color=infra_colors[infra], linewidth=2.5)
         
-        ax.set_xlabel('Reception Delay (ms)', fontsize=12)
-        ax.set_ylabel('CDF', fontsize=12)
-        ax.set_title('Cumulative Distribution Function', fontsize=14, fontweight='bold')
-        ax.legend()
+        ax.set_xlabel('Reception Delay (ms)', fontsize=14)
+        ax.set_ylabel('CDF', fontsize=14)
+        ax.set_title('Cumulative Distribution Function', fontsize=16, fontweight='bold')
+        ax.legend(fontsize=12)
         ax.grid(True, alpha=0.3)
+        ax.tick_params(axis='both', labelsize=12)
         
         # 3. Reception Delay Boxplot
         ax = axes[0, 2]
@@ -642,9 +650,10 @@ class PlotGenerator:
                 patch.set_facecolor(color)
                 patch.set_alpha(0.7)
         
-        ax.set_ylabel('Reception Delay (ms)', fontsize=12)
-        ax.set_title('Statistical Summary', fontsize=14, fontweight='bold')
+        ax.set_ylabel('Reception Delay (ms)', fontsize=14)
+        ax.set_title('Statistical Summary', fontsize=16, fontweight='bold')
         ax.grid(True, alpha=0.3)
+        ax.tick_params(axis='both', labelsize=12)
         
         # 4. Cloud Latency Comparison
         ax = axes[1, 0]
@@ -672,16 +681,17 @@ class PlotGenerator:
             bars = ax.bar(x, means, yerr=stds, capsize=5, 
                          color=colors_cloud, alpha=0.7, edgecolor='black')
             ax.set_xticks(x)
-            ax.set_xticklabels(labels_cloud)
-            ax.set_ylabel('Cloud Latency (ms)', fontsize=12)
-            ax.set_title('Cloud Delivery Latency', fontsize=14, fontweight='bold')
+            ax.set_xticklabels(labels_cloud, fontsize=12)
+            ax.set_ylabel('Cloud Latency (ms)', fontsize=14)
+            ax.set_title('Cloud Delivery Latency', fontsize=16, fontweight='bold')
             ax.grid(True, alpha=0.3, axis='y')
+            ax.tick_params(axis='y', labelsize=12)
             
             # Add value labels
             for bar, mean in zip(bars, means):
                 height = bar.get_height()
                 ax.text(bar.get_x() + bar.get_width()/2., height,
-                       f'{mean:.1f}ms', ha='center', va='bottom', fontsize=10)
+                       f'{mean:.1f}ms', ha='center', va='bottom', fontsize=11, fontweight='bold')
         
         # 5. PDR Comparison
         ax = axes[1, 1]
@@ -703,18 +713,19 @@ class PlotGenerator:
             x = np.arange(len(labels_pdr))
             bars = ax.bar(x, pdrs, color=colors_pdr, alpha=0.7, edgecolor='black')
             ax.set_xticks(x)
-            ax.set_xticklabels(labels_pdr)
-            ax.set_ylabel('PDR (%)', fontsize=12)
-            ax.set_title('Packet Delivery Ratio', fontsize=14, fontweight='bold')
+            ax.set_xticklabels(labels_pdr, fontsize=12)
+            ax.set_ylabel('PDR (%)', fontsize=14)
+            ax.set_title('Packet Delivery Ratio', fontsize=16, fontweight='bold')
             ax.set_ylim([0, 105])
             ax.grid(True, alpha=0.3, axis='y')
+            ax.tick_params(axis='y', labelsize=12)
             
             # Add value labels
             for bar, pdr in zip(bars, pdrs):
                 height = bar.get_height()
                 ax.text(bar.get_x() + bar.get_width()/2., height,
                        f'{pdr:.1f}%', ha='center', va='bottom', 
-                       fontsize=10, fontweight='bold')
+                       fontsize=11, fontweight='bold')
         
         # 6. Coverage Comparison
         ax = axes[1, 2]
@@ -736,18 +747,19 @@ class PlotGenerator:
             x = np.arange(len(labels_cov))
             bars = ax.bar(x, coverages, color=colors_cov, alpha=0.7, edgecolor='black')
             ax.set_xticks(x)
-            ax.set_xticklabels(labels_cov)
-            ax.set_ylabel('Coverage (%)', fontsize=12)
-            ax.set_title('Infrastructure Coverage', fontsize=14, fontweight='bold')
+            ax.set_xticklabels(labels_cov, fontsize=12)
+            ax.set_ylabel('Coverage (%)', fontsize=14)
+            ax.set_title('Infrastructure Coverage', fontsize=16, fontweight='bold')
             ax.set_ylim([0, 105])
             ax.grid(True, alpha=0.3, axis='y')
+            ax.tick_params(axis='y', labelsize=12)
             
             # Add value labels
             for bar, cov in zip(bars, coverages):
                 height = bar.get_height()
                 ax.text(bar.get_x() + bar.get_width()/2., height,
                        f'{cov:.1f}%', ha='center', va='bottom', 
-                       fontsize=10, fontweight='bold')
+                       fontsize=11, fontweight='bold')
         
         plt.tight_layout()
         
@@ -814,15 +826,16 @@ class PlotGenerator:
                 if height > 0:
                     ax.text(bar.get_x() + bar.get_width()/2., height,
                            f'{height:.0f}ms',
-                           ha='center', va='bottom', fontsize=10, fontweight='bold')
+                           ha='center', va='bottom', fontsize=11, fontweight='bold')
         
-        ax.set_ylabel('Mean Reception Delay (ms)', fontsize=14, fontweight='bold')
-        ax.set_xlabel('Infrastructure Type', fontsize=14, fontweight='bold')
-        ax.set_title('Reception Delay: Crashed vs Witness', fontsize=15, fontweight='bold')
+        ax.set_ylabel('Mean Reception Delay (ms)', fontsize=16, fontweight='bold')
+        ax.set_xlabel('Infrastructure Type', fontsize=16, fontweight='bold')
+        ax.set_title('Reception Delay: Crashed vs Witness', fontsize=17, fontweight='bold')
         ax.set_xticks(x)
-        ax.set_xticklabels(infra_types, fontsize=12)
-        ax.legend(fontsize=12, loc='upper left')
+        ax.set_xticklabels(infra_types, fontsize=14)
+        ax.legend(fontsize=13, loc='upper left')
         ax.grid(True, alpha=0.3, axis='y')
+        ax.tick_params(axis='y', labelsize=13)
         
         # 2. Cloud Delivery Latency Comparison by Infrastructure Type
         ax = axes[1]
@@ -861,15 +874,16 @@ class PlotGenerator:
                 if height > 0:
                     ax.text(bar.get_x() + bar.get_width()/2., height,
                            f'{height:.0f}ms',
-                           ha='center', va='bottom', fontsize=10, fontweight='bold')
+                           ha='center', va='bottom', fontsize=11, fontweight='bold')
         
-        ax.set_ylabel('Mean Cloud Delivery Latency (ms)', fontsize=14, fontweight='bold')
-        ax.set_xlabel('Infrastructure Type', fontsize=14, fontweight='bold')
-        ax.set_title('Cloud Latency: Crashed vs Witness', fontsize=15, fontweight='bold')
+        ax.set_ylabel('Mean Cloud Delivery Latency (ms)', fontsize=16, fontweight='bold')
+        ax.set_xlabel('Infrastructure Type', fontsize=16, fontweight='bold')
+        ax.set_title('Cloud Latency: Crashed vs Witness', fontsize=17, fontweight='bold')
         ax.set_xticks(x)
-        ax.set_xticklabels(infra_types, fontsize=12)
-        ax.legend(fontsize=12, loc='upper left')
+        ax.set_xticklabels(infra_types, fontsize=14)
+        ax.legend(fontsize=13, loc='upper left')
         ax.grid(True, alpha=0.3, axis='y')
+        ax.tick_params(axis='y', labelsize=13)
         
         plt.tight_layout()
         
