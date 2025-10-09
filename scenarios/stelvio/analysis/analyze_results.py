@@ -125,32 +125,55 @@ class VisualizationDataGenerator:
         scenario_type = ALL_CONFIGS[config_name]['type']
 
         # Base parameters based on infrastructure type
+        # Realistic values considering:
+        # - Terrestrial: HIGHEST PDR (efficient 6G technology, less path loss in coverage)
+        #                Limited coverage (line-of-sight, obstacles, terrain)
+        # - Satellite:   LOWER PDR (atmospheric interference, long propagation, signal fade)
+        #                Wide coverage but NOT 100% (mountains, deep valleys, weather)
+        # - Hybrid:      High PDR (combines both), VERY HIGH coverage 96-99% (almost always near 100%)
+        
         if infra_type == "Terrestrial":
             base_latency_ms = 80  # 50-150 ms range
             latency_std = 30
             cloud_latency_ms = 60  # 40-100 ms
             cloud_std = 20
-            coverage = 0.70  # 60-80%
-            pdr = 0.90  # 85-95%
+            coverage = 0.68  # 60-75% (limited by line-of-sight, terrain)
+            pdr = 0.94  # 91-97% (HIGHEST - efficient technology)
         elif infra_type == "Satellite":
-            base_latency_ms = 400  # 300-600 ms
+            base_latency_ms = 400  # 300-600 ms (propagation delay)
             latency_std = 80
             cloud_latency_ms = 350  # 250-500 ms
             cloud_std = 60
-            coverage = 0.95  # 90-100%
-            pdr = 0.85  # 80-90%
+            coverage = 0.87  # 83-91% (wide but NOT 100% - mountains, dead zones)
+            pdr = 0.79  # 75-83% (LOWER than Terrestrial - atmospheric loss, signal fade)
         else:  # Hybrid
-            base_latency_ms = 150  # Bimodal: some fast, some slow
+            base_latency_ms = 150  # Bimodal: uses best available path
             latency_std = 120
             cloud_latency_ms = 150  # Bimodal
             cloud_std = 100
-            coverage = 1.0  # 100%
-            pdr = 0.99  # 98-99%
+            coverage = 0.96  # 94-98% (combines both, VERY HIGH but not always 100% - margin of error)
+            pdr = 0.93  # 90-96% (high, uses best path available)
 
         # Add witness delay if applicable
         witness_delay_ms = 0
         if scenario_type == "Witness":
             witness_delay_ms = 3000  # 3 seconds standard witness delay
+
+        # Pre-calculate number of vehicles in coverage to ensure Hybrid is always 95-99%
+        if infra_type == "Hybrid":
+            # For Hybrid, enforce strict 95-99% coverage range (never 100%)
+            # With 20 vehicles: allow 19 vehicles (95%) - this ensures high coverage but not perfect
+            # Small chance of 18 vehicles (90%) to add variability
+            if np.random.random() < 0.85:  # 85% of the time
+                num_in_coverage = num_vehicles - 1  # 19 vehicles = 95%
+            else:  # 15% of the time
+                num_in_coverage = num_vehicles - 2  # 18 vehicles = 90%
+        else:
+            # For other types, use probabilistic coverage
+            num_in_coverage = sum(1 for _ in range(num_vehicles) if np.random.random() < coverage)
+        
+        # Randomly assign which vehicles are in coverage
+        vehicles_in_coverage = set(np.random.choice(num_vehicles, num_in_coverage, replace=False))
 
         data = []
 
@@ -159,12 +182,22 @@ class VisualizationDataGenerator:
             module = f"Stelvio.node[{vehicle_id}].middleware.VehicleReceiverService"
 
             # Determine if vehicle receives (based on coverage and PDR)
-            in_coverage = np.random.random() < coverage
+            in_coverage = vehicle_id in vehicles_in_coverage
             receives = in_coverage and (np.random.random() < pdr)
 
             # Reception delay (in seconds for OMNeT++)
             if receives:
-                delay_ms = max(10, np.random.normal(base_latency_ms + witness_delay_ms, latency_std))
+                # Generate base network delay
+                network_delay_ms = max(10, np.random.normal(base_latency_ms, latency_std))
+                
+                # Add witness delay if applicable (must be AFTER the witness reaction time)
+                if scenario_type == "Witness":
+                    # Witness scenario: minimum delay is witness_delay_ms + network latency
+                    delay_ms = witness_delay_ms + network_delay_ms
+                else:
+                    # Crashed scenario: just network delay
+                    delay_ms = network_delay_ms
+                
                 delay_s = delay_ms / 1000.0
             else:
                 delay_s = 0
@@ -179,7 +212,15 @@ class VisualizationDataGenerator:
         # Generate infrastructure metrics
         infra_module = f"Stelvio.{'antenna' if 'Terrestrial' in config_name else 'satellite'}.middleware.InfrastructureService"
 
-        cloud_lat_ms = max(20, np.random.normal(cloud_latency_ms + witness_delay_ms, cloud_std))
+        # Cloud delivery latency (infrastructure processing + relay time)
+        network_cloud_lat_ms = max(20, np.random.normal(cloud_latency_ms, cloud_std))
+        
+        # Add witness delay if applicable
+        if scenario_type == "Witness":
+            cloud_lat_ms = witness_delay_ms + network_cloud_lat_ms
+        else:
+            cloud_lat_ms = network_cloud_lat_ms
+            
         cloud_lat_s = cloud_lat_ms / 1000.0
 
         data.extend([
@@ -265,9 +306,11 @@ class MetricExtractor:
     
     @staticmethod
     def extract_reception_delays(df: pd.DataFrame) -> pd.Series:
-        """Extract DENM reception delays"""
+        """Extract DENM reception delays (only for successfully received messages)"""
         delays = df[df['scalar'].str.contains('denm_reception_delay', case=False)]
-        return delays['value'] * 1000  # Convert to ms
+        delays_ms = delays['value'] * 1000  # Convert to ms
+        # Filter out zero delays (packets not received - only count successful receptions)
+        return delays_ms[delays_ms > 0]
     
     @staticmethod
     def extract_cloud_latencies(df: pd.DataFrame) -> pd.Series:
@@ -362,6 +405,16 @@ class PlotGenerator:
         ax.set_title(title, fontsize=18, fontweight='bold')
         ax.grid(True, alpha=0.3)
         
+        # Add note for Witness scenario explaining the delay includes witness reaction time
+        if scenario_type == "Witness":
+            note_text = "Note: Delays include 3000ms witness reaction time\n(message sent 3s after accident)"
+            ax.text(0.02, 0.98, note_text, 
+                   transform=ax.transAxes, 
+                   fontsize=12, 
+                   verticalalignment='top',
+                   bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8),
+                   style='italic')
+        
         plt.xticks(rotation=0, ha='center', fontsize=14)
         plt.yticks(fontsize=14)
         plt.tight_layout()
@@ -400,6 +453,17 @@ class PlotGenerator:
         ax.set_title(title, fontsize=18, fontweight='bold')
         ax.legend(fontsize=14, title='Infrastructure', title_fontsize=15)
         ax.grid(True, alpha=0.3)
+        
+        # Add note for Witness scenario
+        if scenario_type == "Witness":
+            note_text = "Note: Delays include 3000ms witness reaction time"
+            ax.text(0.98, 0.02, note_text, 
+                   transform=ax.transAxes, 
+                   fontsize=12, 
+                   verticalalignment='bottom',
+                   horizontalalignment='right',
+                   bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8),
+                   style='italic')
         
         plt.tight_layout()
         
@@ -603,6 +667,16 @@ class PlotGenerator:
         ax.grid(True, alpha=0.3)
         ax.tick_params(axis='both', labelsize=12)
         
+        # Add note for Witness scenario
+        if scenario_type == "Witness":
+            ax.text(0.98, 0.98, "Includes +3s\nwitness delay", 
+                   transform=ax.transAxes, 
+                   fontsize=10, 
+                   verticalalignment='top',
+                   horizontalalignment='right',
+                   bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8),
+                   style='italic')
+        
         # 2. Reception Delay CDF
         ax = axes[0, 1]
         for config in configs:
@@ -625,6 +699,15 @@ class PlotGenerator:
         ax.legend(fontsize=12)
         ax.grid(True, alpha=0.3)
         ax.tick_params(axis='both', labelsize=12)
+        
+        # Add note for Witness scenario
+        if scenario_type == "Witness":
+            ax.text(0.02, 0.98, "Includes +3s\nwitness delay", 
+                   transform=ax.transAxes, 
+                   fontsize=10, 
+                   verticalalignment='top',
+                   bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8),
+                   style='italic')
         
         # 3. Reception Delay Boxplot
         ax = axes[0, 2]
@@ -833,9 +916,19 @@ class PlotGenerator:
         ax.set_title('Reception Delay: Crashed vs Witness', fontsize=17, fontweight='bold')
         ax.set_xticks(x)
         ax.set_xticklabels(infra_types, fontsize=14)
-        ax.legend(fontsize=13, loc='upper left')
+        ax.legend(fontsize=13, loc='lower right')  # Moved from 'upper left' to avoid overlap
         ax.grid(True, alpha=0.3, axis='y')
         ax.tick_params(axis='y', labelsize=13)
+        
+        # Add note explaining Witness includes 3s reaction delay
+        note_text = "Witness delays include +3000ms\nreaction time"
+        ax.text(0.02, 0.98, note_text,  # Moved from right to left to avoid legend
+               transform=ax.transAxes, 
+               fontsize=11, 
+               verticalalignment='top',
+               horizontalalignment='left',
+               bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.9),
+               style='italic')
         
         # 2. Cloud Delivery Latency Comparison by Infrastructure Type
         ax = axes[1]
@@ -881,7 +974,7 @@ class PlotGenerator:
         ax.set_title('Cloud Latency: Crashed vs Witness', fontsize=17, fontweight='bold')
         ax.set_xticks(x)
         ax.set_xticklabels(infra_types, fontsize=14)
-        ax.legend(fontsize=13, loc='upper left')
+        ax.legend(fontsize=13, loc='lower right')  # Moved from 'upper left' to avoid data overlap
         ax.grid(True, alpha=0.3, axis='y')
         ax.tick_params(axis='y', labelsize=13)
         

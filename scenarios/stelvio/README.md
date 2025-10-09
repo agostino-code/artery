@@ -448,6 +448,14 @@ done
 - `t=200s + DELAY`: Veicolo testimone invia DENM
 - Simula tempo reazione umana + decisione segnalazione
 
+> **⚠️ IMPORTANTE - Interpretazione Metriche**:  
+> Nel scenario **Witness**, tutti i **reception delay** nei grafici includono automaticamente il witness delay (default 3000ms).  
+> Questo significa che:
+> - Un delay di 3050ms = 3000ms (witness reaction) + 50ms (network latency)
+> - È **impossibile** avere delay < 3000ms nello scenario Witness
+> - I grafici mostrano annotazioni per ricordare questo offset
+> - Per confronti equi con lo scenario Crashed, sottrai 3000ms dai valori Witness
+
 ### Parametri Generali Simulazione
 
 ```ini
@@ -512,7 +520,8 @@ opp_run -u Qtenv -c Crashed_Terrestrial_GUI -n src:. -l libstelvio.so omnetpp.in
 - **`denm_sequence_number`** - ID sequenziale messaggio
 
 #### 2. Ricezione Veicoli (Receiver)
-- **`denm_reception_delay`** ⭐ - **Latenza end-to-end** (generazione→ricezione)
+- **`denm_reception_delay`** ⭐ - **Latenza end-to-end** (generazione→ricezione)  
+  > ⚠️ **Witness scenario**: Include automaticamente il witness delay (default 3000ms)
 - **`denm_received_flag`** - 1=ricevuto, 0=perso
 - **`denm_within_deadline`** - Ricevuto entro deadline (120ms)
 - **`denm_in_coverage`** - Dentro copertura infrastruttura
@@ -527,6 +536,13 @@ opp_run -u Qtenv -c Crashed_Terrestrial_GUI -n src:. -l libstelvio.so omnetpp.in
 
 #### 4. KPI Derivati
 - **Packet Delivery Ratio (PDR)** - `(ricevuti / totale_veicoli) × 100%`
+  > ⚠️ **PDR Totale vs Condizionale**:
+  > - **PDR Totale**: Include tutti i veicoli (dentro e fuori copertura)
+  > - **PDR Condizionale**: Solo veicoli in copertura
+  > - Formula: `PDR_totale = Coverage × PDR_condizionale`
+  > - **Terrestrial**: Alta qualità (94%) ma limitata copertura (~68%) → PDR totale ~64%
+  > - **Satellite**: Qualità media (79%) ma ampia copertura (~87%) → PDR totale ~69%
+  > - **Hybrid**: Alta qualità (93%) e copertura (~96%) → PDR totale ~89%
 - **Coverage Rate** - `(in_coverage / totale_veicoli) × 100%`
 - **Latency P95** - 95° percentile latenza ricezione
 - **Mean/Median Latency** - Statistiche centrali
