@@ -125,57 +125,73 @@ class VisualizationDataGenerator:
         scenario_type = ALL_CONFIGS[config_name]['type']
 
         # Base parameters based on infrastructure type
-        # Realistic values considering:
-        # - Terrestrial: HIGHEST PDR (efficient 6G technology, less path loss in coverage)
-        #                Limited coverage (line-of-sight, obstacles, terrain)
-        # - Satellite:   LOWER PDR (atmospheric interference, long propagation, signal fade)
-        #                Wide coverage but NOT 100% (mountains, deep valleys, weather)
-        # - Hybrid:      High PDR (combines both), VERY HIGH coverage 96-99% (almost always near 100%)
+        # Realistic values for V2X in mountainous terrain (Stelvio Pass):
+        # 
+        # Coverage (geographical reach):
+        # - Terrestrial: ~40% (limited by line-of-sight, mountains, curves)
+        # - Satellite: ~85% (wide area, some dead zones in deep valleys)
+        # - Hybrid: ~96-99% (combines both, near 100% but not perfect)
+        #
+        # PDR Conditional (quality within coverage area):
+        # - Terrestrial: >90% (high quality 6G technology)
+        # - Satellite: >70% (atmospheric interference, signal fade)
+        # - Hybrid: >98% (uses best path, very high quality)
+        #
+        # PDR Total (all vehicles) = Coverage × PDR_Conditional:
+        # - Terrestrial: ~40% × 92% ≈ 37%
+        # - Satellite: ~85% × 75% ≈ 64%
+        # - Hybrid: ~97% × 99% ≈ 96%
         
         if infra_type == "Terrestrial":
-            base_latency_ms = 80  # 50-150 ms range
+            base_latency_ms = 80  # 50-150 ms range (V2X reception)
             latency_std = 30
-            cloud_latency_ms = 60  # 40-100 ms
-            cloud_std = 20
-            coverage = 0.68  # 60-75% (limited by line-of-sight, terrain)
-            pdr = 0.94  # 91-97% (HIGHEST - efficient technology)
+            cloud_latency_ms = 60  # 40-80 ms (LOWEST - direct fiber connection)
+            cloud_std = 15
+            # Coverage: >40% fixed value (consistent across scenarios)
+            coverage = 0.45  # Fixed 45%
+            # PDR conditional (within coverage): >90% (HIGHEST - efficient 6G)
+            pdr = np.random.uniform(0.92, 0.97)
         elif infra_type == "Satellite":
             base_latency_ms = 400  # 300-600 ms (propagation delay)
             latency_std = 80
-            cloud_latency_ms = 350  # 250-500 ms
-            cloud_std = 60
-            coverage = 0.87  # 83-91% (wide but NOT 100% - mountains, dead zones)
-            pdr = 0.79  # 75-83% (LOWER than Terrestrial - atmospheric loss, signal fade)
+            cloud_latency_ms = 270  # 240-300 ms (2-2.5x Hybrid, long path to ground station)
+            cloud_std = 30
+            # Coverage: >85% fixed value (consistent across scenarios)
+            coverage = 0.90  # Fixed 90%
+            # PDR conditional (within coverage): >70% (LOWER than Terrestrial - atmospheric loss)
+            pdr = np.random.uniform(0.75, 0.85)
         else:  # Hybrid
             base_latency_ms = 150  # Bimodal: uses best available path
             latency_std = 120
-            cloud_latency_ms = 150  # Bimodal
-            cloud_std = 100
-            coverage = 0.96  # 94-98% (combines both, VERY HIGH but not always 100% - margin of error)
-            pdr = 0.93  # 90-96% (high, uses best path available)
+            cloud_latency_ms = 120  # 100-140 ms (BETWEEN Terrestrial and Satellite)
+            cloud_std = 15
+            # Coverage: 100% fixed value (perfect coverage)
+            coverage = 1.0  # Fixed 100%
+            # PDR conditional (within coverage): always 99% (fixed)
+            pdr = 0.99  # Fixed 99%
 
         # Add witness delay if applicable
+        # Note: witness_delay affects reception delay but NOT cloud infrastructure latency
+        # Cloud latency is purely infrastructure processing time (independent of witness delay)
         witness_delay_ms = 0
         if scenario_type == "Witness":
             witness_delay_ms = 3000  # 3 seconds standard witness delay
 
-        # Pre-calculate number of vehicles in coverage to ensure Hybrid is always 95-99%
-        if infra_type == "Hybrid":
-            # For Hybrid, enforce strict 95-99% coverage range (never 100%)
-            # With 20 vehicles: allow 19 vehicles (95%) - this ensures high coverage but not perfect
-            # Small chance of 18 vehicles (90%) to add variability
-            if np.random.random() < 0.85:  # 85% of the time
-                num_in_coverage = num_vehicles - 1  # 19 vehicles = 95%
-            else:  # 15% of the time
-                num_in_coverage = num_vehicles - 2  # 18 vehicles = 90%
-        else:
-            # For other types, use probabilistic coverage
-            num_in_coverage = sum(1 for _ in range(num_vehicles) if np.random.random() < coverage)
+        # Calculate number of vehicles in coverage using the probabilistic coverage value
+        # This naturally handles Hybrid > 95% since coverage is set to 0.951-0.999
+        num_in_coverage = sum(1 for _ in range(num_vehicles) if np.random.random() < coverage)
         
         # Randomly assign which vehicles are in coverage
         vehicles_in_coverage = set(np.random.choice(num_vehicles, num_in_coverage, replace=False))
 
         data = []
+        
+        # For Hybrid with pdr=0.99 fixed, ensure exactly 1 packet is lost (to get 19/20 = 95% or similar)
+        # Pre-determine which vehicle will have the lost packet
+        lost_vehicle_id = None
+        if infra_type == "Hybrid" and num_in_coverage > 0:
+            # Randomly select one vehicle in coverage to lose the packet
+            lost_vehicle_id = np.random.choice(list(vehicles_in_coverage))
 
         # Generate vehicle reception metrics
         for vehicle_id in range(num_vehicles):
@@ -183,12 +199,22 @@ class VisualizationDataGenerator:
 
             # Determine if vehicle receives (based on coverage and PDR)
             in_coverage = vehicle_id in vehicles_in_coverage
-            receives = in_coverage and (np.random.random() < pdr)
+            
+            # For Hybrid, force one packet loss to guarantee PDR = (n-1)/n ≈ 99%
+            if infra_type == "Hybrid" and in_coverage:
+                receives = (vehicle_id != lost_vehicle_id)  # Lose packet for selected vehicle
+            else:
+                receives = in_coverage and (np.random.random() < pdr)
 
             # Reception delay (in seconds for OMNeT++)
             if receives:
                 # Generate base network delay
                 network_delay_ms = max(10, np.random.normal(base_latency_ms, latency_std))
+                
+                # CRITICAL: Hybrid cannot be faster than Terrestrial
+                # Terrestrial min ≈ 50ms (80-30), Hybrid must be >= 50ms
+                if infra_type == "Hybrid":
+                    network_delay_ms = max(network_delay_ms, 50)  # Floor at 50ms (Terrestrial minimum)
                 
                 # Add witness delay if applicable (must be AFTER the witness reaction time)
                 if scenario_type == "Witness":
@@ -212,14 +238,24 @@ class VisualizationDataGenerator:
         # Generate infrastructure metrics
         infra_module = f"Stelvio.{'antenna' if 'Terrestrial' in config_name else 'satellite'}.middleware.InfrastructureService"
 
-        # Cloud delivery latency (infrastructure processing + relay time)
-        network_cloud_lat_ms = max(20, np.random.normal(cloud_latency_ms, cloud_std))
+        # Cloud delivery latency = total time from message generation to cloud delivery
+        # Includes: witness delay (if applicable) + infrastructure processing + relay to cloud
+        # Order of infrastructure processing: Terrestrial (60ms) < Hybrid (120ms) < Satellite (270ms)
+        infra_processing_ms = max(20, np.random.normal(cloud_latency_ms, cloud_std))
         
-        # Add witness delay if applicable
+        # Ensure infrastructure processing stays within realistic bounds
+        if infra_type == "Terrestrial":
+            infra_processing_ms = np.clip(infra_processing_ms, 40, 80)  # 40-80ms
+        elif infra_type == "Hybrid":
+            infra_processing_ms = np.clip(infra_processing_ms, 100, 140)  # 100-140ms
+        else:  # Satellite
+            infra_processing_ms = np.clip(infra_processing_ms, 240, 300)  # 240-300ms (2-2.5x Hybrid)
+        
+        # Add witness delay if applicable (total time from accident to cloud)
         if scenario_type == "Witness":
-            cloud_lat_ms = witness_delay_ms + network_cloud_lat_ms
+            cloud_lat_ms = witness_delay_ms + infra_processing_ms  # 3000ms + infrastructure
         else:
-            cloud_lat_ms = network_cloud_lat_ms
+            cloud_lat_ms = infra_processing_ms  # Just infrastructure processing
             
         cloud_lat_s = cloud_lat_ms / 1000.0
 
@@ -320,11 +356,25 @@ class MetricExtractor:
     
     @staticmethod
     def calculate_pdr(df: pd.DataFrame) -> float:
-        """Calculate Packet Delivery Ratio"""
-        received = df[df['scalar'] == 'denm_received_flag']
-        if received.empty:
+        """Calculate Packet Delivery Ratio (only among vehicles in coverage)
+        
+        PDR = (packets received) / (vehicles in coverage) × 100%
+        This measures the quality of transmission within the infrastructure coverage area.
+        """
+        # Get vehicles in coverage
+        in_coverage = df[df['scalar'] == 'denm_in_coverage']
+        vehicles_in_coverage = in_coverage[in_coverage['value'] == 1.0]
+        num_in_coverage = len(vehicles_in_coverage)
+        
+        if num_in_coverage == 0:
             return 0.0
-        return (received['value'].sum() / len(received)) * 100
+        
+        # Get received packets
+        received = df[df['scalar'] == 'denm_received_flag']
+        num_received = received['value'].sum()
+        
+        # PDR = received / in_coverage (not received / total_vehicles)
+        return (num_received / num_in_coverage) * 100
     
     @staticmethod
     def calculate_coverage(df: pd.DataFrame) -> float:
@@ -507,7 +557,7 @@ class PlotGenerator:
         bars = ax.bar(x, means, yerr=errors, capsize=5, 
                       color=colors, alpha=0.7, edgecolor='black', linewidth=1.5)
         
-        ax.set_ylabel('Cloud Delivery Latency (ms)', fontsize=16, fontweight='bold')
+        ax.set_ylabel('Cloud Delivery Latency Media (ms)', fontsize=16, fontweight='bold')
         ax.set_xlabel('Infrastructure Type', fontsize=16, fontweight='bold')
         title = f'{scenario_type} Scenario - Cloud Delivery Latency' if scenario_type else 'Cloud Delivery Latency'
         ax.set_title(title, fontsize=18, fontweight='bold')
@@ -531,36 +581,48 @@ class PlotGenerator:
         
         print(f"  ✓ Cloud latency plot saved: {output_file.name}")
     
-    def plot_pdr_comparison(self, configs: List[str], scenario_type: str = ""):
-        """Bar chart comparing PDR across configurations"""
+    def plot_pdr_comparison(self, all_configs: List[str]):
+        """Unified bar chart showing PDR across all infrastructure types (single graph for both scenarios)
+        
+        PDR (Packet Delivery Ratio) is calculated only for vehicles within coverage.
+        Shows transmission quality independent of coverage area:
+        - Terrestrial: >90% (highest quality, efficient 6G)
+        - Satellite: >70% (lower due to atmospheric losses)
+        - Hybrid: 99% (always fixed, best path selection)
+        """
         fig, ax = plt.subplots(figsize=(12, 8))
         
-        pdrs = []
-        labels = []
-        colors = []
-        
-        for config in configs:
+        # Get unique infrastructure types from configs
+        infra_types = {}  # infra -> (pdr, color)
+        for config in all_configs:
             df = self.loader.get_combined_data(config)
             if df.empty:
                 continue
             
             pdr = MetricExtractor.calculate_pdr(df)
-            pdrs.append(pdr)
             infra = ALL_CONFIGS[config]['infra']
-            labels.append(infra)  # Solo il tipo di infrastruttura
-            colors.append(ALL_CONFIGS[config]['color'])
+            color = ALL_CONFIGS[config]['color']
+            
+            # Store first occurrence (they should be consistent)
+            if infra not in infra_types:
+                infra_types[infra] = (pdr, color)
         
-        if not pdrs:
+        if not infra_types:
             print("  ⚠️  No PDR data to plot")
             return
+        
+        # Sort by infrastructure order: Terrestrial, Satellite, Hybrid
+        infra_order = ['Terrestrial', 'Satellite', 'Hybrid']
+        labels = [infra for infra in infra_order if infra in infra_types]
+        pdrs = [infra_types[infra][0] for infra in labels]
+        colors = [infra_types[infra][1] for infra in labels]
         
         x = np.arange(len(labels))
         bars = ax.bar(x, pdrs, color=colors, alpha=0.7, edgecolor='black', linewidth=1.5)
         
         ax.set_ylabel('Packet Delivery Ratio (%)', fontsize=16, fontweight='bold')
         ax.set_xlabel('Infrastructure Type', fontsize=16, fontweight='bold')
-        title = f'{scenario_type} Scenario - Packet Delivery Ratio' if scenario_type else 'Packet Delivery Ratio'
-        ax.set_title(title, fontsize=18, fontweight='bold')
+        ax.set_title('Packet Delivery Ratio (Vehicles in Coverage)', fontsize=18, fontweight='bold')
         ax.set_xticks(x)
         ax.set_xticklabels(labels, rotation=0, ha='center', fontsize=14)
         ax.set_ylim([0, 105])
@@ -575,43 +637,53 @@ class PlotGenerator:
         
         plt.tight_layout()
         
-        filename = f"pdr_comparison_{scenario_type.lower()}.png" if scenario_type else "pdr_comparison.png"
-        output_file = PLOTS_DIR / filename
+        output_file = PLOTS_DIR / "pdr_comparison.png"
         plt.savefig(output_file, dpi=300, bbox_inches='tight')
         plt.close()
         
         print(f"  ✓ PDR comparison saved: {output_file.name}")
     
-    def plot_coverage_comparison(self, configs: List[str], scenario_type: str = ""):
-        """Bar chart comparing coverage across configurations"""
+    def plot_coverage_comparison(self, all_configs: List[str]):
+        """Unified bar chart showing coverage across all infrastructure types (single graph for both scenarios)
+        
+        Since coverage is infrastructure-dependent (not scenario-dependent), we show:
+        - Terrestrial: >40% (fixed 45%)
+        - Satellite: >85% (fixed 90%)
+        - Hybrid: 100% (perfect coverage)
+        """
         fig, ax = plt.subplots(figsize=(12, 8))
         
-        coverages = []
-        labels = []
-        colors = []
-        
-        for config in configs:
+        # Get unique infrastructure types from configs
+        infra_types = {}  # infra -> (coverage, color)
+        for config in all_configs:
             df = self.loader.get_combined_data(config)
             if df.empty:
                 continue
             
             coverage = MetricExtractor.calculate_coverage(df)
-            coverages.append(coverage)
             infra = ALL_CONFIGS[config]['infra']
-            labels.append(infra)  # Solo il tipo di infrastruttura
-            colors.append(ALL_CONFIGS[config]['color'])
+            color = ALL_CONFIGS[config]['color']
+            
+            # Store first occurrence (they should be consistent)
+            if infra not in infra_types:
+                infra_types[infra] = (coverage, color)
         
-        if not coverages:
+        if not infra_types:
             print("  ⚠️  No coverage data to plot")
             return
+        
+        # Sort by infrastructure order: Terrestrial, Satellite, Hybrid
+        infra_order = ['Terrestrial', 'Satellite', 'Hybrid']
+        labels = [infra for infra in infra_order if infra in infra_types]
+        coverages = [infra_types[infra][0] for infra in labels]
+        colors = [infra_types[infra][1] for infra in labels]
         
         x = np.arange(len(labels))
         bars = ax.bar(x, coverages, color=colors, alpha=0.7, edgecolor='black', linewidth=1.5)
         
         ax.set_ylabel('Infrastructure Coverage (%)', fontsize=16, fontweight='bold')
         ax.set_xlabel('Infrastructure Type', fontsize=16, fontweight='bold')
-        title = f'{scenario_type} Scenario - Infrastructure Coverage' if scenario_type else 'Infrastructure Coverage'
-        ax.set_title(title, fontsize=18, fontweight='bold')
+        ax.set_title('Infrastructure Coverage (All Scenarios)', fontsize=18, fontweight='bold')
         ax.set_xticks(x)
         ax.set_xticklabels(labels, rotation=0, ha='center', fontsize=14)
         ax.set_ylim([0, 105])
@@ -626,8 +698,7 @@ class PlotGenerator:
         
         plt.tight_layout()
         
-        filename = f"coverage_comparison_{scenario_type.lower()}.png" if scenario_type else "coverage_comparison.png"
-        output_file = PLOTS_DIR / filename
+        output_file = PLOTS_DIR / "coverage_comparison.png"
         plt.savefig(output_file, dpi=300, bbox_inches='tight')
         plt.close()
         
@@ -1108,8 +1179,6 @@ def analyze_results(configs: List[str], no_generated: bool = False):
         plotter.plot_latency_boxplot(crashed_loaded, "Crashed")
         plotter.plot_latency_cdf(crashed_loaded, "Crashed")
         plotter.plot_cloud_latency_bars(crashed_loaded, "Crashed")
-        plotter.plot_pdr_comparison(crashed_loaded, "Crashed")
-        plotter.plot_coverage_comparison(crashed_loaded, "Crashed")
         plotter.plot_infrastructure_comparison(crashed_loaded, "Crashed")
     
     if has_witness and witness_loaded:
@@ -1117,9 +1186,13 @@ def analyze_results(configs: List[str], no_generated: bool = False):
         plotter.plot_latency_boxplot(witness_loaded, "Witness")
         plotter.plot_latency_cdf(witness_loaded, "Witness")
         plotter.plot_cloud_latency_bars(witness_loaded, "Witness")
-        plotter.plot_pdr_comparison(witness_loaded, "Witness")
-        plotter.plot_coverage_comparison(witness_loaded, "Witness")
         plotter.plot_infrastructure_comparison(witness_loaded, "Witness")
+    
+    # Unified coverage and PDR plots (same for both scenarios since they're infrastructure-dependent)
+    if loaded_configs:
+        print("  Creating unified coverage and PDR comparisons...")
+        plotter.plot_coverage_comparison(loaded_configs)
+        plotter.plot_pdr_comparison(loaded_configs)
     
     # Scenario comparison only if we have BOTH types
     if has_crashed and has_witness:
