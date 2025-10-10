@@ -468,15 +468,15 @@ class PlotGenerator:
             patch.set_facecolor(color)
             patch.set_alpha(0.7)
         
-        ax.set_ylabel('Reception Delay (ms)', fontsize=16, fontweight='bold')
-        ax.set_xlabel('Infrastructure Type', fontsize=16, fontweight='bold')
-        title = f'{scenario_type} Scenario - DENM Reception Delay' if scenario_type else 'DENM Reception Delay Distribution'
+        ax.set_ylabel('Tempo medio di ricezione (ms)', fontsize=16, fontweight='bold')
+        ax.set_xlabel('Tipo di infrastruttura', fontsize=16, fontweight='bold')
+        title = f'Scenario {scenario_type} - Tempo medio di ricezione DENM' if scenario_type else 'Distribuzione Ritardo di Ricezione DENM'
         ax.set_title(title, fontsize=18, fontweight='bold')
         ax.grid(True, alpha=0.3)
         
         # Add note for Witness scenario explaining the delay includes witness reaction time
         if scenario_type == "Witness":
-            note_text = "Note: Delays include 3000ms witness reaction time\n(message sent 3s after accident)"
+            note_text = "Nota: I tempi includono 3000ms di tempo di reazione del testimone\n(messaggio inviato 3s dopo l'incidente)"
             ax.text(0.02, 0.98, note_text, 
                    transform=ax.transAxes, 
                    fontsize=12, 
@@ -516,16 +516,16 @@ class PlotGenerator:
                    color=ALL_CONFIGS[config]['color'],
                    linewidth=2.5)
         
-        ax.set_xlabel('Reception Delay (ms)', fontsize=16, fontweight='bold')
-        ax.set_ylabel('Cumulative Probability', fontsize=16, fontweight='bold')
-        title = f'{scenario_type} Scenario - Cumulative Distribution' if scenario_type else 'Cumulative Distribution'
+        ax.set_xlabel('Tempo di ricezione (ms)', fontsize=16, fontweight='bold')
+        ax.set_ylabel('Probabilità cumulativa', fontsize=16, fontweight='bold')
+        title = f'Scenario {scenario_type} - Distribuzione cumulativa' if scenario_type else 'Distribuzione Cumulativa'
         ax.set_title(title, fontsize=18, fontweight='bold')
-        ax.legend(fontsize=14, title='Infrastructure', title_fontsize=15)
+        ax.legend(fontsize=14, title='Infrastruttura', title_fontsize=15)
         ax.grid(True, alpha=0.3)
         
         # Add note for Witness scenario
         if scenario_type == "Witness":
-            note_text = "Note: Delays include 3000ms witness reaction time"
+            note_text = "Nota: I ritardi includono 3000ms di tempo di reazione del testimone"
             ax.text(0.98, 0.02, note_text, 
                    transform=ax.transAxes, 
                    fontsize=12, 
@@ -576,9 +576,9 @@ class PlotGenerator:
         bars = ax.bar(x, means, yerr=errors, capsize=5, 
                       color=colors, alpha=0.7, edgecolor='black', linewidth=1.5)
         
-        ax.set_ylabel('Cloud Delivery Latency Media (ms)', fontsize=16, fontweight='bold')
-        ax.set_xlabel('Infrastructure Type', fontsize=16, fontweight='bold')
-        title = f'{scenario_type} Scenario - Cloud Delivery Latency' if scenario_type else 'Cloud Delivery Latency'
+        ax.set_ylabel('Latenza media di consegna al Cloud (ms)', fontsize=16, fontweight='bold')
+        ax.set_xlabel('Tipo di Infrastruttura', fontsize=16, fontweight='bold')
+        title = f'Scenario {scenario_type} - Latenza media di consegna al Cloud' if scenario_type else 'Latenza di Consegna al Cloud'
         ax.set_title(title, fontsize=18, fontweight='bold')
         ax.set_xticks(x)
         ax.set_xticklabels(labels, rotation=0, ha='center', fontsize=14)
@@ -638,10 +638,10 @@ class PlotGenerator:
         
         x = np.arange(len(labels))
         bars = ax.bar(x, pdrs, color=colors, alpha=0.7, edgecolor='black', linewidth=1.5)
-        
-        ax.set_ylabel('Packet Delivery Ratio (%)', fontsize=16, fontweight='bold')
-        ax.set_xlabel('Infrastructure Type', fontsize=16, fontweight='bold')
-        ax.set_title('Packet Delivery Ratio (Vehicles in Coverage)', fontsize=18, fontweight='bold')
+
+        ax.set_ylabel('Packet Delivery Ratio (PDR) (%)', fontsize=16, fontweight='bold')
+        ax.set_xlabel('Tipo di Infrastruttura', fontsize=16, fontweight='bold')
+        ax.set_title('Packet Delivery Ratio (PDR) - Veicoli in Copertura', fontsize=18, fontweight='bold')
         ax.set_xticks(x)
         ax.set_xticklabels(labels, rotation=0, ha='center', fontsize=14)
         ax.set_ylim([0, 105])
@@ -700,9 +700,9 @@ class PlotGenerator:
         x = np.arange(len(labels))
         bars = ax.bar(x, coverages, color=colors, alpha=0.7, edgecolor='black', linewidth=1.5)
         
-        ax.set_ylabel('Infrastructure Coverage (%)', fontsize=16, fontweight='bold')
-        ax.set_xlabel('Infrastructure Type', fontsize=16, fontweight='bold')
-        ax.set_title('Infrastructure Coverage (All Scenarios)', fontsize=18, fontweight='bold')
+        ax.set_ylabel('Copertura (%)', fontsize=16, fontweight='bold')
+        ax.set_xlabel('Tipo di Infrastruttura', fontsize=16, fontweight='bold')
+        ax.set_title('Copertura (Tutti gli Scenari)', fontsize=18, fontweight='bold')
         ax.set_xticks(x)
         ax.set_xticklabels(labels, rotation=0, ha='center', fontsize=14)
         ax.set_ylim([0, 105])
@@ -726,7 +726,7 @@ class PlotGenerator:
     def plot_infrastructure_comparison(self, configs: List[str], scenario_type: str):
         """Detailed comparison of infrastructure types for a single scenario type"""
         fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-        fig.suptitle(f'{scenario_type} Scenario - Infrastructure Comparison (Terrestrial vs Satellite vs Hybrid)', 
+        fig.suptitle(f'Scenario {scenario_type} - Confronto Infrastrutture (Terrestre vs Satellite vs Ibrido)', 
                      fontsize=18, fontweight='bold')
         
         # Colors for each infrastructure
@@ -750,16 +750,16 @@ class PlotGenerator:
             ax.hist(delays, bins=50, alpha=0.6, label=infra, 
                    color=infra_colors[infra], edgecolor='black')
         
-        ax.set_xlabel('Reception Delay (ms)', fontsize=14)
-        ax.set_ylabel('Frequency', fontsize=14)
-        ax.set_title('Reception Delay Distribution', fontsize=16, fontweight='bold')
+        ax.set_xlabel('Tempi di ricezione (ms)', fontsize=14)
+        ax.set_ylabel('Frequenza', fontsize=14)
+        ax.set_title('Distribuzione della ricezione', fontsize=16, fontweight='bold')
         ax.legend(fontsize=12)
         ax.grid(True, alpha=0.3)
         ax.tick_params(axis='both', labelsize=12)
         
         # Add note for Witness scenario
         if scenario_type == "Witness":
-            ax.text(0.98, 0.98, "Includes +3s\nwitness delay", 
+            ax.text(0.98, 0.98, "Include +3s\nritardo testimone", 
                    transform=ax.transAxes, 
                    fontsize=10, 
                    verticalalignment='top',
@@ -782,17 +782,17 @@ class PlotGenerator:
             infra = ALL_CONFIGS[config]['infra']
             ax.plot(sorted_delays, cdf, label=infra, 
                    color=infra_colors[infra], linewidth=2.5)
-        
-        ax.set_xlabel('Reception Delay (ms)', fontsize=14)
+
+        ax.set_xlabel('Tempi di ricezione (ms)', fontsize=14)
         ax.set_ylabel('CDF', fontsize=14)
-        ax.set_title('Cumulative Distribution Function', fontsize=16, fontweight='bold')
+        ax.set_title('Funzione di distribuzione cumulativa', fontsize=16, fontweight='bold')
         ax.legend(fontsize=12)
         ax.grid(True, alpha=0.3)
         ax.tick_params(axis='both', labelsize=12)
         
         # Add note for Witness scenario
         if scenario_type == "Witness":
-            ax.text(0.02, 0.98, "Includes +3s\nwitness delay", 
+            ax.text(0.02, 0.98, "Include +3s\nritardo testimone", 
                    transform=ax.transAxes, 
                    fontsize=10, 
                    verticalalignment='top',
@@ -823,8 +823,8 @@ class PlotGenerator:
                 patch.set_facecolor(color)
                 patch.set_alpha(0.7)
         
-        ax.set_ylabel('Reception Delay (ms)', fontsize=14)
-        ax.set_title('Statistical Summary', fontsize=16, fontweight='bold')
+        ax.set_ylabel('Tempo di ricezione (ms)', fontsize=14)
+        ax.set_title('Riepilogo Statistico', fontsize=16, fontweight='bold')
         ax.grid(True, alpha=0.3)
         ax.tick_params(axis='both', labelsize=12)
         
@@ -855,8 +855,8 @@ class PlotGenerator:
                          color=colors_cloud, alpha=0.7, edgecolor='black')
             ax.set_xticks(x)
             ax.set_xticklabels(labels_cloud, fontsize=12)
-            ax.set_ylabel('Cloud Latency (ms)', fontsize=14)
-            ax.set_title('Cloud Delivery Latency', fontsize=16, fontweight='bold')
+            ax.set_ylabel('Latenza media(ms)', fontsize=14)
+            ax.set_title('Latenza media di Consegna al Cloud', fontsize=16, fontweight='bold')
             ax.grid(True, alpha=0.3, axis='y')
             ax.tick_params(axis='y', labelsize=12)
             
@@ -888,7 +888,7 @@ class PlotGenerator:
             ax.set_xticks(x)
             ax.set_xticklabels(labels_pdr, fontsize=12)
             ax.set_ylabel('PDR (%)', fontsize=14)
-            ax.set_title('Packet Delivery Ratio', fontsize=16, fontweight='bold')
+            ax.set_title('Packet Delivery Ratio (PDR)', fontsize=16, fontweight='bold')
             ax.set_ylim([0, 105])
             ax.grid(True, alpha=0.3, axis='y')
             ax.tick_params(axis='y', labelsize=12)
@@ -921,8 +921,8 @@ class PlotGenerator:
             bars = ax.bar(x, coverages, color=colors_cov, alpha=0.7, edgecolor='black')
             ax.set_xticks(x)
             ax.set_xticklabels(labels_cov, fontsize=12)
-            ax.set_ylabel('Coverage (%)', fontsize=14)
-            ax.set_title('Infrastructure Coverage', fontsize=16, fontweight='bold')
+            ax.set_ylabel('Copertura (%)', fontsize=14)
+            ax.set_title('Copertura infrastrutturale', fontsize=16, fontweight='bold')
             ax.set_ylim([0, 105])
             ax.grid(True, alpha=0.3, axis='y')
             ax.tick_params(axis='y', labelsize=12)
@@ -991,7 +991,7 @@ class PlotGenerator:
                        label='Crashed', color='#4CAF50', alpha=0.8, edgecolor='black')
         bars2 = ax.bar(x + width/2, witness_delays_by_infra, width, 
                        label='Witness', color='#FF9800', alpha=0.8, edgecolor='black')
-        
+
         # Add value labels
         for bars in [bars1, bars2]:
             for bar in bars:
@@ -1001,9 +1001,9 @@ class PlotGenerator:
                            f'{height:.0f}ms',
                            ha='center', va='bottom', fontsize=11, fontweight='bold')
         
-        ax.set_ylabel('Mean Reception Delay (ms)', fontsize=16, fontweight='bold')
-        ax.set_xlabel('Infrastructure Type', fontsize=16, fontweight='bold')
-        ax.set_title('Reception Delay: Crashed vs Witness', fontsize=17, fontweight='bold')
+        ax.set_ylabel('Tempo di ricezione(ms)', fontsize=16, fontweight='bold')
+        ax.set_xlabel('Tipo di infrastruttura', fontsize=16, fontweight='bold')
+        ax.set_title('Tempo di ricezione medio: Crashed vs Witness', fontsize=17, fontweight='bold')
         ax.set_xticks(x)
         ax.set_xticklabels(infra_types, fontsize=14)
         ax.legend(fontsize=13, loc='lower right')  # Moved from 'upper left' to avoid overlap
@@ -1011,7 +1011,7 @@ class PlotGenerator:
         ax.tick_params(axis='y', labelsize=13)
         
         # Add note explaining Witness includes 3s reaction delay
-        note_text = "Witness delays include +3000ms\nreaction time"
+        note_text = "I ritardi Witness includono +3000ms\ndi tempo di reazione"
         ax.text(0.02, 0.98, note_text,  # Moved from right to left to avoid legend
                transform=ax.transAxes, 
                fontsize=11, 
@@ -1059,9 +1059,9 @@ class PlotGenerator:
                            f'{height:.0f}ms',
                            ha='center', va='bottom', fontsize=11, fontweight='bold')
         
-        ax.set_ylabel('Mean Cloud Delivery Latency (ms)', fontsize=16, fontweight='bold')
-        ax.set_xlabel('Infrastructure Type', fontsize=16, fontweight='bold')
-        ax.set_title('Cloud Latency: Crashed vs Witness', fontsize=17, fontweight='bold')
+        ax.set_ylabel('Latenza media di Consegna al Cloud (ms)', fontsize=16, fontweight='bold')
+        ax.set_xlabel('Tipo di infrastruttura', fontsize=16, fontweight='bold')
+        ax.set_title('Latenza media Cloud: Crashed vs Witness', fontsize=17, fontweight='bold')
         ax.set_xticks(x)
         ax.set_xticklabels(infra_types, fontsize=14)
         ax.legend(fontsize=13, loc='lower right')  # Moved from 'upper left' to avoid data overlap
