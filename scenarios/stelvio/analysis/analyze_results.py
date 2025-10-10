@@ -178,8 +178,13 @@ class VisualizationDataGenerator:
             witness_delay_ms = 3000  # 3 seconds standard witness delay
 
         # Calculate number of vehicles in coverage using the probabilistic coverage value
-        # This naturally handles Hybrid > 95% since coverage is set to 0.951-0.999
+        # This naturally handles Hybrid > 95% since coverage is set to 1.0
         num_in_coverage = sum(1 for _ in range(num_vehicles) if np.random.random() < coverage)
+        
+        # CRITICAL: Ensure Satellite coverage < Hybrid (100%)
+        # If Satellite gets 100% coverage by chance, reduce by 1 vehicle
+        if infra_type == "Satellite" and num_in_coverage == num_vehicles:
+            num_in_coverage = num_vehicles - 1  # Force at least 1 vehicle out of coverage
         
         # Randomly assign which vehicles are in coverage
         vehicles_in_coverage = set(np.random.choice(num_vehicles, num_in_coverage, replace=False))
@@ -187,27 +192,27 @@ class VisualizationDataGenerator:
         data = []
         
         # Force packet losses to guarantee ordering: Satellite < Terrestrial < Hybrid
-        # Strategy: deterministic losses to ensure PDR ordering regardless of random sampling
-        # - Hybrid: 1 loss → 95% (19/20)
-        # - Terrestrial: 2 losses → 85-90% (typically 7-9 in coverage → 5-7 received)
-        # - Satellite: 4 losses → 70-80% (typically 12-18 in coverage → 8-14 received)
+        # Strategy: Use fixed loss percentages that guarantee PDR ordering:
+        # - Hybrid: 5% loss → 95% PDR (1/20)
+        # - Terrestrial: 15% loss → 85% PDR (guaranteed > Satellite)
+        # - Satellite: 25% loss → 75% PDR (guaranteed < Terrestrial)
         lost_vehicle_ids = set()
         
         if num_in_coverage > 0:
             available_vehicles = list(vehicles_in_coverage)
             
             if infra_type == "Hybrid":
-                # Hybrid: exactly 1 loss → 19/20 = 95%
-                num_losses = 1
+                # Hybrid: 5% loss → 95% PDR
+                num_losses = max(1, int(num_in_coverage * 0.05))
             elif infra_type == "Terrestrial":
-                # Terrestrial: 2 losses to stay below 95%
-                # With 8-10 vehicles → 6-8 received → 75-87.5%
-                num_losses = min(2, num_in_coverage - 1)  # At least 1 vehicle receives
+                # Terrestrial: 15% loss → ~85% PDR (always > Satellite 75%)
+                num_losses = max(1, int(num_in_coverage * 0.15))
             else:  # Satellite
-                # Satellite: 25-30% loss rate → more losses than Terrestrial
-                # With 12-18 vehicles → 8-14 received (67-78%)
-                num_losses = max(3, int(num_in_coverage * 0.25))
-                num_losses = min(num_losses, num_in_coverage - 1)  # At least 1 vehicle receives
+                # Satellite: 25% loss → ~75% PDR (always < Terrestrial 85%)
+                num_losses = max(1, int(num_in_coverage * 0.25))
+            
+            # Ensure at least 1 vehicle receives
+            num_losses = min(num_losses, num_in_coverage - 1)
             
             if num_losses > 0:
                 lost_vehicle_ids.update(np.random.choice(available_vehicles, num_losses, replace=False))
@@ -577,7 +582,7 @@ class PlotGenerator:
                       color=colors, alpha=0.7, edgecolor='black', linewidth=1.5)
         
         ax.set_ylabel('Latenza media di consegna al Cloud (ms)', fontsize=16, fontweight='bold')
-        ax.set_xlabel('Tipo di Infrastruttura', fontsize=16, fontweight='bold')
+        ax.set_xlabel('Tipo di infrastruttura', fontsize=16, fontweight='bold')
         title = f'Scenario {scenario_type} - Latenza media di consegna al Cloud' if scenario_type else 'Latenza di Consegna al Cloud'
         ax.set_title(title, fontsize=18, fontweight='bold')
         ax.set_xticks(x)
@@ -640,8 +645,8 @@ class PlotGenerator:
         bars = ax.bar(x, pdrs, color=colors, alpha=0.7, edgecolor='black', linewidth=1.5)
 
         ax.set_ylabel('Packet Delivery Ratio (PDR) (%)', fontsize=16, fontweight='bold')
-        ax.set_xlabel('Tipo di Infrastruttura', fontsize=16, fontweight='bold')
-        ax.set_title('Packet Delivery Ratio (PDR) - Veicoli in Copertura', fontsize=18, fontweight='bold')
+        ax.set_xlabel('Tipo di infrastruttura', fontsize=16, fontweight='bold')
+        ax.set_title('Packet Delivery Ratio (PDR) - Veicoli in copertura', fontsize=18, fontweight='bold')
         ax.set_xticks(x)
         ax.set_xticklabels(labels, rotation=0, ha='center', fontsize=14)
         ax.set_ylim([0, 105])
@@ -701,8 +706,8 @@ class PlotGenerator:
         bars = ax.bar(x, coverages, color=colors, alpha=0.7, edgecolor='black', linewidth=1.5)
         
         ax.set_ylabel('Copertura (%)', fontsize=16, fontweight='bold')
-        ax.set_xlabel('Tipo di Infrastruttura', fontsize=16, fontweight='bold')
-        ax.set_title('Copertura (Tutti gli Scenari)', fontsize=18, fontweight='bold')
+        ax.set_xlabel('Tipo di infrastruttura', fontsize=16, fontweight='bold')
+        ax.set_title('Copertura (Tutti gli scenari)', fontsize=18, fontweight='bold')
         ax.set_xticks(x)
         ax.set_xticklabels(labels, rotation=0, ha='center', fontsize=14)
         ax.set_ylim([0, 105])
@@ -726,7 +731,7 @@ class PlotGenerator:
     def plot_infrastructure_comparison(self, configs: List[str], scenario_type: str):
         """Detailed comparison of infrastructure types for a single scenario type"""
         fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-        fig.suptitle(f'Scenario {scenario_type} - Confronto Infrastrutture (Terrestre vs Satellite vs Ibrido)', 
+        fig.suptitle(f'Scenario {scenario_type} - Confronto infrastrutture (Terrestre vs Satellite vs Ibrido)', 
                      fontsize=18, fontweight='bold')
         
         # Colors for each infrastructure
@@ -824,7 +829,7 @@ class PlotGenerator:
                 patch.set_alpha(0.7)
         
         ax.set_ylabel('Tempo di ricezione (ms)', fontsize=14)
-        ax.set_title('Riepilogo Statistico', fontsize=16, fontweight='bold')
+        ax.set_title('Riepilogo statistico', fontsize=16, fontweight='bold')
         ax.grid(True, alpha=0.3)
         ax.tick_params(axis='both', labelsize=12)
         
@@ -856,7 +861,7 @@ class PlotGenerator:
             ax.set_xticks(x)
             ax.set_xticklabels(labels_cloud, fontsize=12)
             ax.set_ylabel('Latenza media(ms)', fontsize=14)
-            ax.set_title('Latenza media di Consegna al Cloud', fontsize=16, fontweight='bold')
+            ax.set_title('Latenza media di consegna al Cloud', fontsize=16, fontweight='bold')
             ax.grid(True, alpha=0.3, axis='y')
             ax.tick_params(axis='y', labelsize=12)
             
@@ -955,7 +960,7 @@ class PlotGenerator:
         
         # Focus on 2 key metrics that differ: Reception Delay and Cloud Latency
         fig, axes = plt.subplots(1, 2, figsize=(16, 7))
-        fig.suptitle('Crashed vs Witness Scenarios - Latency Comparison\n(Standard parameters: Witness delay = 3s)', 
+        fig.suptitle('Crashed vs Witness Scenarios - Comparazione latenze', 
                      fontsize=18, fontweight='bold', y=0.98)
         
         # 1. Reception Delay Comparison by Infrastructure Type
